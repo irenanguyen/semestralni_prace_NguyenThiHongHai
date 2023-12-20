@@ -1,0 +1,536 @@
+---
+title: "Semestrální práce"
+author: "NGUYEN THI HONG HAI"
+date: "2023-12-14"
+output: 
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+
+> ***Načtení knihovny***
+
+```{r,message=FALSE, warning=FALSE, collapse=TRUE}
+library("tidyverse")
+library("stringr")
+library("ggplot2")
+library("tidyverse")
+library("dplyr")
+
+```
+
+## 1. úkol:	Hledání palindromů
+
+  V souboru „fraze.txt“ (kódování UTF-8) najdete spoustu anglických frází, vaším úkolem je vytvořit funkci, která na zavolání 
+
+1. načte zadaná data a 
+
+2. vrátí soubor „fraze_zpracovano.txt“. Výstupem funkce bude 
+
+3. list se dvěma prvky 
+
+- vektor všech frází, které jsou palindrom, 
+
+- vektor všech frází, které nejsou palindrom. 
+
+4. Dále funkce do konzole vypíše počet ohodnocených frází, jejich průměrnou délku (počet znaků), průměrný počet slov a v procentech vyjádří kolik ze vstupních frází je palindromem (doplňte vhodným popisem, např. zastoupení palindromu v souboru je …).
+
+
+  Co je palindrom se dozvíte [zde](https://cs.wikipedia.org/wiki/Palindrom)
+
+  Ignorujte interpunkci apod., jako argument k funkci použijte argumenty odkazující na cestu ke vstupnímu souboru a k výstupnímu souboru.
+
+
+> ***Vytvoření funkce***
+
+```{r}
+
+func_Zpracovani_faze <- function(soubor_fraze, fraze_rozpracovano){
+ # Načtení dat
+  fraze <- read_lines(soubor_fraze, locale = locale(encoding = "UTF-8"))
+  
+  # Funkce pro kontrolu, zda je fráze palindrom
+  je_palindrom <- function(text) {
+    
+    ## odstranit nealfanumerické znaky = znaky ke formátování textu (např. tabulátor, konec odstavce, pevná mezera apod.), není součástí vlastního textu, není viditelný pouze na monitoru
+    
+    cisty_text <- str_to_lower(str_replace_all(text, "[^a-z]", ""))
+    
+    ## obrátit pořadí znaků v cistém textu.
+    rev_text <- stringi::stri_reverse(cisty_text)
+    return(str_detect(cisty_text, rev_text))
+  }
+  
+  # Vytvoření vektorů pro palindromy a ne-palindromy
+  palindromy <- fraze[sapply(fraze, je_palindrom)]
+  nepalindromy <- fraze[!sapply(fraze, je_palindrom)]
+
+  
+  # Počet ohodnocených frází
+  pocet_palindromu <- length(palindromy)
+  pocet_nepalindromu <- length(nepalindromy)
+  
+  # Průměrná délka frází
+  prumer_palindromu <- mean(str_length(palindromy))
+  prumer_nepalindromu <- mean(str_length(nepalindromy))
+  
+  # Průměrný počet slov ve frázích
+  
+  ##  \s+ = odpovídá všemu, čemu neodpovídá \s , tj. čemu neodpovídá bílý znak. --> poučítá se jen písmena nikoliv s mezerou
+  
+  prumer_slov_palindromu <- mean(str_count(palindromy, "\\S+"))
+  prumer_slov_nepalindromu <- mean(str_count(nepalindromy, "\\S+"))
+  
+  # Zastoupení palindromu v procentech
+  zastoupeni_palindromu <- (pocet_palindromu / length(fraze)) * 100
+  
+  # Vytvoření listu s výsledky
+  vysledky <- list(
+    palindromy = palindromy,
+    nepalindromy = nepalindromy
+  )
+  
+  # Zápis výsledků do souboru
+  write_lines(paste("Palindromy:", palindromy, collapse = "\n"), fraze_rozpracovano)
+  write_lines(paste("Ne-palindromy:", nepalindromy, collapse = "\n"), fraze_rozpracovano, append = TRUE)
+  
+  # Výpis do konzole
+  cat("Počet palindromů:", pocet_palindromu, "\n")
+  cat("Průměrná délka palindromů:", prumer_palindromu, "\n")
+  cat("Průměrný počet slov v palindromech:", prumer_slov_palindromu, "\n")
+  cat("Počet ne-palindromů:", pocet_nepalindromu, "\n")
+  cat("Průměrná délka ne-palindromů:", prumer_nepalindromu, "\n")
+  cat("Průměrný počet slov v ne-palindromech:", prumer_slov_nepalindromu, "\n")
+  cat("Zastoupení palindromů v procentech:", zastoupeni_palindromu, "%\n")
+  
+  return(vysledky)
+  
+}
+
+```
+
+> ***Testování funkce***
+
+```{r}
+
+func_Zpracovani_faze("fraze.txt", "fraze_zpracovano.txt")
+
+```
+
+## 2. úkol:	Otevírání dveří -- simulace
+
+  Proveďte 100 000 simulací následujícího problému a vyhodnoťte pravděpodobnosti pro otázky a) - c) níže (náhodné číslo mezi 0 a 1 můžete vygenerovat pomocí funkce runif()):
+
+> ***Co dělá runif***
+
+```{r}
+
+runif(10,min = 0, max = 100) #generuje náhodně 10 hodnot v rozmezí 0 do 100
+
+
+```
+
+> ***Generování celých čísel***
+
+```{r}
+
+round(runif(10,min = 0, max = 100),0)
+
+```
+
+  > ***jiná možnost = sample()***
+
+
+```{r}
+
+sample(0:100,10)
+
+```
+
+
+> ***Simulace soutěže***
+
+
+  Soutěžící je postaven před troje dveře. Za jedněmi z dveří je (náhodně) schovaná výhra v podobě bakalářského titulu ze statistiky, za dalšími dvěma dveřmi není nic. Soutěžící neví, za kterými dveřmi se skrývá výhra. 
+
+  Má tedy za úkol vybrat jedny dveře, které by chtěl otevřít (1. kolo). Jakmile na ně soutěžící ukáže, moderátor (ví co je za kterými dveřmi) otevře jedny ze zbývajících (nevybraných) dveří za kterými nic není. Nyní má soutěžící možnost si vybrat, zda potvrdí svoji původní volbu dveří nebo naopak změní svoji volbu na druhé zatím neotevřené dveře (2. kolo). Zvolené dveře následně moderátor otevře a soutěžící buď vyhraje titul nebo nikoliv podle toho, zda zvolil správné dveře.
+
+
+```{r}
+
+simuluj_soutez <- function(strategie) {
+  # Počet výher
+  vitezstvi <- 0
+  
+  # Počet simulací
+  pocet_simulaci <- 100000
+  
+  for (i in 1:pocet_simulaci) {
+    # Náhodné umístění výhry za jedny z dveří s funkci runif()
+    vyhra <- round(runif(n=1, min=1, max=3), 0)
+    
+    ##sample() je o mnohem méně komplikovaný
+    
+    # Soutěžící volí dveře v prvním kole
+    vybrane_dvere_1 <- sample(1:3, 1)
+    
+    # Moderátor otevírá jedny z nevybraných dveří, za kterými není výhra
+    
+    otevrene_dvere <- sample(setdiff(1:3, c(vybrane_dvere_1, vyhra)), 1)
+    
+    # Druhý výběr dveří podle strategie
+    vybrane_dvere_2 <- strategie(vybrane_dvere_1, otevrene_dvere)
+    
+    # Zjištění, zda soutěžící vyhrál
+    vitezstvi <- vitezstvi + (vybrane_dvere_2 == vyhra)
+  }
+  
+  # Výpočet pravděpodobnosti výhry
+  pravdepodobnost_vyhry <- round((vitezstvi / pocet_simulaci)*100,0)
+  
+  return(pravdepodobnost_vyhry)
+}
+
+```
+
+> ***Strategie soutěžících***
+
+> ***Strategie Petra***
+
+  ***Soutěžící Petr v 1. kole vždy zvolí náhodně dveře, za kterými si myslí že je výhra. V 2.kole si je stále nejistý a opět zvolí dveře náhodně. S jakou pravděpodobností si odnese výhru? (Kolikrát ze 100 000 simulací otevře dveře s výhrou)***
+
+```{r}
+
+strategie_petr <- function(vybrane_dvere_1, otevrene_dvere) {
+  # Soutěžící Petr volí náhodně v 2. kole
+  return(sample(1:3, 1))
+}
+
+```
+
+> ***Strategie Karla***
+
+  ***Soutěžící Karla v 1. kole vždy zvolí náhodně dveře, za kterými si myslí že je výhra. V 2.kole si je ale jistá že udělala chybu a své rozhodnutí vždy změní (vybere druhé stále zavřené dveře). S jakou pravděpodobností si odnese výhru? (Kolikrát ze 100 000 simulací otevře dveře s výhrou)***
+
+```{r}
+
+strategie_karla <- function(vybrane_dvere_1, otevrene_dvere) {
+  # Soutěžící Karla vždy změní svoji volbu v 2. kole
+  return(setdiff(1:3, c(vybrane_dvere_1, otevrene_dvere)))
+
+}
+
+```
+
+
+> ***Strategie Anny***
+
+  ***Soutěžící Anna v 1. kole vždy zvolí náhodně dveře, za kterými si myslí že je výhra. V 2.kole vždy stále věří svému původnímu rozhodnutí a vždy trvá na otevření původně označených dveří. S jakou pravděpodobností si odnese výhru? (Kolikrát ze 100 000 simulací otevře dveře s výhrou)***
+
+```{r}
+
+strategie_anna <- function(vybrane_dvere_1, otevrene_dvere) {
+  # Soutěžící Anna trvá na své původní volbě v 2. kole
+  return(vybrane_dvere_1)
+}
+
+```
+
+> ***Simulace pro soutěžícího***
+
+```{r}
+
+pravdepodobnost_petr <- simuluj_soutez(strategie_petr)
+cat("Pravděpodobnost výhry Petra:", pravdepodobnost_petr, "%")
+
+
+pravdepodobnost_karla <- simuluj_soutez(strategie_karla)
+cat("Pravděpodobnost výhry Karly:", pravdepodobnost_karla, "%")
+
+
+pravdepodobnost_anna <- simuluj_soutez(strategie_anna)
+cat("Pravděpodobnost výhry Anny:", pravdepodobnost_anna, "%")
+
+
+```
+
+
+## 3. úkol: Euklidovská a Manhattan vzdálenost
+
+
+V této úloze budete pracovat s datovým souborem obsahujícím souřadnice, kde každá souřadnice obsahuje hodnoty X a Y. Samy si ho vytvoříte, musí obsahovat alespoň 20 rozdílných bodů. Váš úkol se skládá ze tří částí.
+Nejprve vytvořte . Dále vytvořte podobnou vlastní funkci pro výpočet Manhattanské vzdálenosti mezi dvěma souřadnicemi s použitím Manhattanské vzdálenostní formule.
+2)	Dále napište funkci, která vezme dataset souřadnic a vypočítá jak Euklidovské, tak Manhattanské vzdálenosti mezi všemi páry souřadnic.
+3)	Nakonec najděte a zobrazte v grafu pár souřadnic s nejmenší a největší Euklidovskou
+vzdáleností a pár souřadnic s nejmenší a největší Manhattanskou vzdáleností.
+
+```{r}
+
+souradice_bod <- read.csv("souradnice_bod.csv", encoding = "UTF-8")
+
+souradice_bod
+
+```
+
+> ***Funkce pro výpočet Euklidovské vzdálenosti mezi dvěma body***
+
+  Vlastní funkce, která vypočítá Euklidovskou vzdálenost mezi dvěma souřadnicemi s použitím Euklidovské vzdálenostní formule:
+
+$$L^{2} = \sqrt{(x_2-x_1)^2+(y_2-y_1)^2}$$
+
+```{r}
+
+euklidovska_vzdalenost <- function(matrix_bod) {
+  dist(matrix_bod,method = "euclidean")
+}
+
+```
+
+
+> ***Funkce pro výpočet Manhattanské vzdálenosti mezi dvěma body***
+
+  Vlastní funkce pro výpočet Manhattanské vzdálenosti mezi dvěma souřadnicemi s použitím Manhattanské vzdálenostní formule
+  
+$$L^{1} = |x_2-x_1|+|y_2-y_1|$$
+
+```{r}
+
+manhattanska_vzdalenost <- function(matrix_bod) {
+  dist(matrix_bod,method = "manhattan")
+}
+
+```
+
+> ***Funkce pro výpočet Euklidovských a Manhattanských vzdáleností mezi všemi páry souřadnic***
+
+```{r}
+
+vypocet_vzdalenosti <- function(matrix_bod) {
+  
+  manhattanska_dist <- manhattanska_vzdalenost(matrix_bod)
+  euklidovska_dist <- euklidovska_vzdalenost(matrix_bod)
+  
+  df_man = reshape2::melt(as.matrix(manhattanska_dist))
+  df_eu = reshape2::melt(as.matrix(euklidovska_dist))
+  
+  
+  return(merge(df_eu,df_man,by = c("Var1", "Var2")))
+ 
+}
+
+
+mat_bod = matrix(data = c(souradice_bod$X, souradice_bod$Y), ncol = 2)
+
+tab_Man_Euk_vydalenost <- vypocet_vzdalenosti(mat_bod) |> 
+  dplyr::rename("euklidovska_vzdalenost" = "value.x",
+                "manhattanska_vzdalenost" = "value.y")
+
+
+summarize_df <- tab_Man_Euk_vydalenost |> 
+  summarise(min_man = min(manhattanska_vzdalenost),
+            max_man = max(manhattanska_vzdalenost),
+            min_euk = min(euklidovska_vzdalenost),
+            max_euk = max(euklidovska_vzdalenost))
+
+
+
+```
+
+
+> ***Funkce pro nalezení a zobrazení extrémů***
+
+
+```{r, warning=FALSE}
+
+ggplot2::ggplot(data = tab_Man_Euk_vydalenost, aes(x=tab_Man_Euk_vydalenost$euklidovska_vzdalenost,y=tab_Man_Euk_vydalenost$manhattanska_vzdalenost))+geom_point(color=factor(tab_Man_Euk_vydalenost$manhattanska_vzdalenost))+
+  labs(x = "Euklodovská vzdálenost",
+       y = "Manhattanská vzdálenost")+
+  scale_x_log10()
+
+```
+
+## 4. úkol -- Grafy
+
+V souboru „ceny_aut.csv“ máte reálné prodejní ceny automobilů a jejich základních charakteristik.
+
+> Odstraňte duplicitní hodnoty záznamů – zanechte pouze poslední pozorování v čase v případě že všechny ostatní proměnné jsou stejné.
+
+```{r}
+
+df_ceny_aut <- read.csv(file = "ceny_aut.csv",sep = ';')
+
+df_ceny_aut <- df_ceny_aut[!duplicated(df_ceny_aut),]
+
+head(df_ceny_aut)
+
+
+```
+
+
+> Vytvořte nové sloupce značka a model a vyplňte je příslušnými hodnotami (např. značka Škoda, model Fabia).
+
+```{r,warning=FALSE}
+
+df_ceny_aut <- df_ceny_aut |> 
+  separate(col = "vehicle_model", into = c("znacka","model"), sep = " ",remove = F)
+
+df_ceny_aut |> 
+  select(vehicle_type,znacka,model) |> head()
+
+```
+
+>	Změňte proměnnou engine_volume na číselnou proměnnou objem motoru.
+
+```{r}
+df_ceny_aut$engine_volume <- as.numeric(gsub("[^[:digit:]]", "", df_ceny_aut$engine_volume))
+
+df_ceny_aut <- df_ceny_aut |> 
+  rename(objem_monitor = engine_volume)
+
+df_ceny_aut|> 
+  select(vehicle_type,objem_monitor) |> head()
+
+```
+
+>	Kategorizujte automobily do 4 cenových kategorií (levné, středně levné, středně drahé, drahé),
+podle toho, zda je jeho cena pod hodnotou 25% kvantilu, respektive 50% a 75%.
+
+```{r}
+
+kvanlita <- quantile(df_ceny_aut$price_total, probs = c(0.25, 0.5, 0.75),na.rm = F)
+
+df_ceny_aut <- df_ceny_aut |> 
+  mutate(cenova_kategorie = cut(df_ceny_aut$price_total,
+                              breaks = c(-Inf, kvanlita, Inf),
+                              labels = c("levne", "stredne levne", "stredne drahe", "drahe")))
+
+df_ceny_aut |> select(vehicle_type,price_total,cenova_kategorie) |> head()
+
+```
+
+>	Napočítejte vhodné hodnoty základních popisných statistik pro vámi vybrané proměnné, případně zachyťte jejich vztah. Popište výsledek slovy.
+
+```{r}
+
+df_ceny_aut |> 
+  summarise(number_of_car = n(),
+            latest_manifacture_year = max(year_of_manufacture),
+            biggest_engine_volume = max(objem_monitor),
+            smallest_engine_vomlume = min(objem_monitor),
+            average_engine_volume = mean(objem_monitor),
+            nejvetsi_spotreba = max(number_of_km/objem_monitor),
+            nejmensi_spotreba = min(number_of_km/objem_monitor))
+
+
+```
+- Jsou celkově ***1662 aut*** v databázi
+- Nejnovější auta v databázi jsou vyrobena v roku ***2020***
+- Největší objem auta je ***2199*** / nejmenší je ***998*** / průměrný objem auta je ***1740.56***
+- Největší spotřeba je ***175.37*** / nejmenší je ***3.2***
+
+>	Opakujte předchozí bod pro skupiny pozorování vytvořené podle značky automobilu. Popište výsledek slovy.
+
+```{r}
+
+df_ceny_aut |> 
+  group_by(znacka) |> 
+  summarise(pocet_aut = n(),
+            latest_manifacture_year = max(year_of_manufacture),
+            biggest_engine_volume = max(objem_monitor),
+            smallest_engine_vomlume = min(objem_monitor),
+            average_engine_volume = mean(objem_monitor),
+            nejvetsi_spotreba = max(number_of_km/objem_monitor),
+            nejmensi_spotreba = min(number_of_km/objem_monitor))
+
+```
+
+> Pro značku Hyundai
+
+- Jsou dohromady ***32*** aut v databázi
+- Nejnovější auta v databázi jsou vyrobena v roku ***2018***
+- Největší objem auta je ***2199*** / nejmenší je ***998*** / průměrný objem auta je ***1518.906***
+- Největší spotřeba je ***138.18*** / nejmenší je ***22.37***
+
+> Pro značku Škoda
+
+- Jsou dohromady ***1630*** aut v databázi
+- Nejnovější auta v databázi jsou vyrobena v roku ***2020***
+- Největší objem auta je ***1984*** / nejmenší je ***999*** / průměrný objem auta je ***1744.907***
+- Největší spotřeba je ***175.37*** / nejmenší je ***3.22***
+
+>	***Vytvořte alespoň 3 grafy, které vhodně znázorní hodnoty/vztahy v datech. Dejte si záležet,
+vhodně pojmenujte osy, vyberte vhodné barvy atd. Popište výsledek slovy.***
+
+***1. Graf objemu monitoru podle značky aut***
+
+```{r,warning=FALSE,message=FALSE}
+library("plotly")
+
+plot_ly(x = df_ceny_aut$znacka, y = df_ceny_aut$objem_monitor, type = 'box', color = factor(df_ceny_aut$znacka),quartilemethod="exclusive") |> 
+  layout(title = "Objem monitor podle značky",
+         xaxis = list(
+           title = "Značka"
+         ),
+         yaxis = list(
+           title = "Objem Monitor",
+           range = c(900,2500)
+         )
+         )
+
+```
+
+> Slovní odpověď
+
+***U značky Hyundai***
+
++ Největší objem monitoru je  1685
++ Největší objem monitoru je  998
+
+***U značky Škoda***
+
++ Největší objem monitoru je  1984
++ Největší objem monitoru je  999
+
+
+***2. Graf podílu aut podle typu paliva***
+
+```{r}
+
+df_plot2 <- df_ceny_aut |> 
+  group_by(fuel_type) |> 
+  summarise(podil = n()/1662)
+
+
+colors <- c('rgb(158,202,225)', 'rgb(58,200,225)', 'rgb(49,130,189)', 'rgb(171,104,87)', 'rgb(114,147,203)')
+
+
+
+plot_ly(df_plot2, labels = df_plot2$fuel_type, values = df_plot2$podil, type = 'pie', textposition = 'inside', textinfo = 'label+percent',insidetextfont = list(color = '#FFFFFF'),
+        marker = list(colors = colors,
+                      line = list(color = '#FFFFFF', width = 1))) |> 
+  layout(title = 'Podíl aut podle typu paliva')
+
+
+```
+
+***Slovní odpověď***: 80.7% aut používá Nafta, 0,842% aut používá zemní plyn, zbývající 18.5% používá benzín
+
+***3. Graf ceny podle roku výroky***
+
+```{r, warning=FALSE}
+
+df_plot3 <- df_ceny_aut |> 
+  group_by(year_of_manufacture) |> 
+  summarise(nejlevnejsi = min(price_total),
+            nejdrazsi = max(price_total))
+
+
+plot_ly(df_plot3, x = df_plot3$year_of_manufacture, y = df_plot3$nejdrazsi, type = 'bar', name = 'Nejdražší cena', color = df_plot3$year_of_manufacture) |> 
+  add_lines(y = df_plot3$nejlevnejsi, name = "Nejlevnější cena") |> 
+  layout(title = "Cena podle roku výroky",
+         xaxis = list(title = "", tickangle = -45))
+
+```
+
+***Slovní odpověď***: nejdražší cena se vyskytla v roce 2018, nejlevnější v roce 2012
